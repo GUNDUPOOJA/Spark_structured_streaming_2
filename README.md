@@ -20,6 +20,14 @@ So far we have covered
 - **Bounded** (bounded by weekly, monthly, quarterly) - we can most probably use the state store
 - **Unbounded** (the data would be more so you might have to use your own solution) - it depends if data is less we can use state store here as well
 
-- 
+- Refer update-mode-demo notebook
+------------------------------------
+1.  when we do aggregation i.e state store is created, internally it do it for micro batch, it will club it together without your intervention. if 5 batches are done, 6th is also done, it will accumulate 6 batches - this is hidden from the user.
+2. catalog -> Filestore - DBFS - streaming input folder - input1- upload files - file1.json - file2.json - file3.json
+3.  In databricks cluster - Open spark UI - structured streaming - Run ID - check state rows
 
-- 
+
+How to implement your own solution without state store coming into picture
+--------------------------------------------------------------------------
+
+
