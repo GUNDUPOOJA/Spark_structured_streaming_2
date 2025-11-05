@@ -29,5 +29,10 @@ So far we have covered
 
 How to implement your own solution without state store coming into picture
 --------------------------------------------------------------------------
+- custom function implementation for aggregation which will not trigger state store - improves performance
+- Refer update-mode-demo notebook
+
+TRIGGERS IN SPARK STRUCTURED STREAMING
+-------------------------------------------
 
 
