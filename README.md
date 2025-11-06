@@ -34,5 +34,148 @@ How to implement your own solution without state store coming into picture
 
 TRIGGERS IN SPARK STRUCTURED STREAMING
 -------------------------------------------
+- We have understood if our agg is not time bound, like if there lot of entries in state store, then better not to leverage the state store and develop our custom solution
+- we know everything is a microbatch in spark structured streaming - Its not continous but gives a feeling of streaming
+- **How big is a microbatch? how is this decided ?**
+- **when is the new microbatch triggered**
+
+- Both depends on the kind of trigger you specify.
+
+- **Triggers are applicable to writeStream**
+- you can mention like **.trigger(processingTime ='10 seconds')**
+- **Types of triggers**
+  1. **Unspecified (default one)** - once the first microbatch is completed, it will immediately trigger the next microbatch
+     - Lets say you have input folder (file1, file2), then we run the spark streaming application
+     - Here there is no file3, so why to trigger empty batch - some kind of optimization happens here it will wait for the file to arrive
+  3. **fixed Interval**
+     - Each microbatch will start after a certain time
+     - Lets say if you specify 5 min as a fixed interval - if previous microbatch is completed in 2 min, it will wait for 3 more min to trigger next batch
+     - if previous batch completes in 8 min - it will instantly trigger the next microbatch after completion of previous microbatch provided it has data.
+     - where we wish to collect good sizable amount of data and then process
+  5. **Available Now**
+     - It process the microbatch and then stops automatically by itself
+     - .trigger(availableNow=True)
+     - Lets say you have file1, file2, file3 in the folder - you invoke availnow trigger, it will process all the files as part of the microbatch and then it will stop
+   - Ideally streaming applications will not stop, but here it will stop
+   - we can schedule it for every hour and then we can stop.
+ 
+   - In fixed interval - streaming job will hold the resources
+   - In available now - streaming job will stop and doesn't hold the resources
+ 
+   - Available now its more like a batch processing but here it will take care of incremental processing automatically
+ 
+  FAULT TOLERANCE IN STREAMING
+  ------------------------------------
+  - So far we have talked about how is stream processing different than batches
+  - challenges involved with streaming
+  - streaming is taken in micro batch approach
+  - **various sources :** socket source, file source, kafka source
+  - **sinks:** file, delta, kafka, console
+  - Readstream, processing, writeStream
+  - **checkpoint**- maintain the state (calculating the runningtotal), it maintains info on what all it processed
+  - **output modes** - append, complete, update
+  - **state store** - maintain the state in executor memory
+  - **foreach** - where we write our own custom logic - we don't use state store here
+ -  How to avoid state store and implement our own logic
+ -  **Types of triggers** - unspecified, availableNow, fixed interval
+ -  **Types of aggregations** -
+   1.Time bound aggregations(also called window aggregations)
+    1. Tumbling window
+    2. sliding window
+   2.continous aggregations
+
+#### Fault tolerance and exactly once guarantee
+-----------------------------------------------
+- Ideally a Streaming application should run forever
+- It might stop
+  1. Exception (whenever we get corrupt data, we haven't handled, application can stop)
+  2. Maintenance activities (server upgrade, rewrite the code)
+     
+- our application should be able to stop and restart gracefully, this means to maintain **exactly once semantics**
+- **Exactly once semantics (do not miss any input record, do not create duplicate output records)**
+- Spark structured streaming provides ample support for this exactly once sementics
+- It maintains the state of the microbatch in the checkpoint location
+- checkpoint location helps to achieve fault tolerance
+- **checkpoint location mainly contains 2 things**
+  1. **read position** - which all files have processed
+  2. **state information** - calculating running total
+
+- Spark structured streaming maintains all the info it requires to restart the unfinished microbatch
+  
+- **To guarantee, exactly once sementics, there are **4** requirements should be met**
+  1. **Restart the application with same checkpoint location** - lets say we got an exception in 3rd batch, in commits we would have 2 commits.
+  2. **use a replayable source** - consider there are 100 records in the third batch, after processing 30 records it gave some exception, these 30 records should be available to you when you start reprocessing (when we use socket datasource we can't get older data back again)
+   - Kafka, file source both are replayable sources
+ 3. **Use deterministic computation** -  when we start reprocessing, these 30 records it should give the same output (30 record processed earlier and 30 rec processing now after restart) ex: square root of 4 result same any time we calculate - today, tomorrow, forever, $ rate changes everyday
+4. **Use an Idempotent sink** - any number of times you run the application the output should be same
+     - Consider there are 100 records in the 3rd microbatch
+     - after processing 30 records, it gave some exception
+     - we are processing 30 records 2 times, after restart, we are writing this to output 2 times
+     - 2nd time when you are writing the same output, it should not impact us
+     - Either it should discard the 2nd output or it should overwrite the 1st output with the 2nd outpu
+
+#### Types of aggregations 
+-----------------------------
+
+
+
+
+
+
+
+#### Watermark - How to deal with late arriving records
+-----------------------------------------------------------
+- 
+
+
+
+
+
+#### Streaming Joins (Joins of static, streaming and joins of 2 streaming df)
+----------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
