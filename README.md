@@ -116,6 +116,54 @@ TRIGGERS IN SPARK STRUCTURED STREAMING
 
 #### Types of aggregations 
 -----------------------------
+- There are 2 types of aggregations
+  1. Timebound aggregations
+  2. continous aggregations
+ 
+- **continous aggregations:**
+- you purchase some grocery from a retail store
+- on purchase of 100 rs you get 1 reward point
+- if these reward points never expire (unbounded)
+- If there are 100 million customers (state store has to keep 100 million records), lets say every month this retail store is getting 1 million new customers,state store is getting bigger - history in the state store will keep on growing.
+- In such cases, its better to implement custom solution which we have implemented earlier
+
+- **Timebound aggregations(window aggregations)**
+- one month window (I want to calculate the reward points over a window of 1 month, after that do not need to maintain the state store, this make sure state store won't grow too much.)
+- Lets say reward points expire in 1 month
+- state store cleanup will take place each month
+- There are 2 kinds of window
+  1.**Tumbling window - a series of fixed size, non overlapping time interval**
+     -  Ex: 10 -10.15
+     -  10.15 - 10.30
+     -  10.30 - 10.45
+     -  Here we have a fixed time
+  3. **sliding window - a series of fixed size, overlapping window (15 min window, sliding interval is 5 min)**
+     - 10 - 10.15
+     - 10.05 - 10.20
+     - 10.10 - 10.25
+  - **The aggregation windows are based on event time not on triggered time**
+  - **Event time** - is the time event is generated
+  - **Triggered time** - event will reach to us for processing (lot of delays can happen like network delays), this is called triggered time
+ 
+  - suppose, we have this events, In this image, event is generated at 11.05 and this event might reach to spark at 11.20
+  - <img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/2cd00ed5-87e6-48fd-a3f3-43e6663cf0fc" />
+
+  - Business has asked us to find sales every 15 minutes, we should use tumbling window
+  - Ex: 11 - 11.15
+  - 11.15 - 11.30
+  - 11.30 - 11.45
+  - 11.45 - 12
+  - Let's try to execute this and calculate this, using spark structured streaming
+ 
+  - Here we are using socket as source, and console as output
+  - open a localhost netcat : nc -lk 9970
+  - Refer **prog2.py file**
+  - <img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/35740aab-97b3-40a4-9520-ce09697da7ac" />
+  - state store window will be like this after inserting the records, check late arriving records also they will get updated in that respective window because not cleaning up previous windows accomodate updates for late arrriving records, if we don't know when a record will be late 1 year, 1 month so we can't cleanup state store and keeps growing again and leads to OOM error .
+  - <img width="363" height="300" alt="image" src="https://github.com/user-attachments/assets/661c65f8-6735-4212-8e65-24902d7a6943" />
+
+  #### How to solve the above challenge using Watermark Streaming
+  - 
 
 
 
