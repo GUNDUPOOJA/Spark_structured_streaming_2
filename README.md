@@ -162,27 +162,32 @@ TRIGGERS IN SPARK STRUCTURED STREAMING
   - state store window will be like this after inserting the records, check late arriving records also they will get updated in that respective window because not cleaning up previous windows accomodate updates for late arrriving records, if we don't know when a record will be late 1 year, 1 month so we can't cleanup state store and keeps growing again and leads to OOM error .
   - <img width="363" height="300" alt="image" src="https://github.com/user-attachments/assets/661c65f8-6735-4212-8e65-24902d7a6943" />
 
-  #### How to solve the above challenge using Watermark Streaming
-  - 
-
-
-
-
-
-
-
-#### Watermark - How to deal with late arriving records
------------------------------------------------------------
-- 
-
-
-
-
+  #### How to solve the above challenge using Watermark Streaming (How to deal with late arriving records)
+  ----------------------------------------------------------------------------------------------------------
+  - previously, we looked into windowing aggregations and we wouldn't able to cleanup the state store because of some late arriving records
+  - If we keep entertaining the late arriving records, we can't clean state store
+  - To deal with late coming records, we have a concept of **watermark**
+  - **Watermark** : It is like setting an expiry date to a record  
+                  - Lets say watermark duration is 30 min, if a record comes after 30 min then spark can discard that  
+                  - If we don't go in this mode, we should maintain full history there should be some constraint - till this time we can wait, after that we can ignore  
+                 - Lets say business might say 99.99% accuracy, but we know 99.9% of your records are never late than 30 minutes  
+                 - Then you can set your watermark to 30 minutes  
+                 - out of 1000 events, 1 event can arrive later than 30 minutes - we can ignore  
+                 - 999 events will arrive within 30 minutes which we will accomodate  
+                 - Refer prog2.py file  
+                 - watermark should be added before groupby only  
+                - At every point of time a **watermark boundary** will be created - whatever is the latest event till now - 30 minutes  
+                - <img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/127e4e1d-792b-40b8-ba78-8644465dc399" />  
+                - Latest event is 11:05, -30 minutes is 10.35 is the watermark boundary, any record before 10:35 is discarded from state store  
+                - Eventhough some of the records were more than 30 min they weren't discarded, some of the records were more than 30 min, those are not discarded it all depends on which window is open  
+                - **Points to remember**  
+                1. Watermark is the way to clean state store  
+                2. Events within the watermark are taken - this is guaranteed  
+                3. Events outside the watermark may or may not be taken - depends on which window open  
 
 #### Streaming Joins (Joins of static, streaming and joins of 2 streaming df)
 ----------------------------------------------------------------------------------
-
-
+- 
 
 
 
