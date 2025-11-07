@@ -168,24 +168,57 @@ TRIGGERS IN SPARK STRUCTURED STREAMING
   - If we keep entertaining the late arriving records, we can't clean state store
   - To deal with late coming records, we have a concept of **watermark**
   - **Watermark** : It is like setting an expiry date to a record  
-                  - Lets say watermark duration is 30 min, if a record comes after 30 min then spark can discard that  
-                  - If we don't go in this mode, we should maintain full history there should be some constraint - till this time we can wait, after that we can ignore  
-                 - Lets say business might say 99.99% accuracy, but we know 99.9% of your records are never late than 30 minutes  
-                 - Then you can set your watermark to 30 minutes  
-                 - out of 1000 events, 1 event can arrive later than 30 minutes - we can ignore  
-                 - 999 events will arrive within 30 minutes which we will accomodate  
-                 - Refer prog2.py file  
-                 - watermark should be added before groupby only  
-                - At every point of time a **watermark boundary** will be created - whatever is the latest event till now - 30 minutes  
-                - <img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/127e4e1d-792b-40b8-ba78-8644465dc399" />  
-                - Latest event is 11:05, -30 minutes is 10.35 is the watermark boundary, any record before 10:35 is discarded from state store  
-                - Eventhough some of the records were more than 30 min they weren't discarded, some of the records were more than 30 min, those are not discarded it all depends on which window is open  
-                - **Points to remember**  
-                1. Watermark is the way to clean state store  
-                2. Events within the watermark are taken - this is guaranteed  
-                3. Events outside the watermark may or may not be taken - depends on which window open  
+  - Lets say watermark duration is 30 min, if a record comes after 30 min then spark can discard that  
+  - If we don't go in this mode, we should maintain full history there should be some constraint - till this time we can wait, after that we can ignore  
+  - Lets say business might say 99.99% accuracy, but we know 99.9% of your records are never late than 30 minutes  
+  - Then you can set your watermark to 30 minutes  
+  - out of 1000 events, 1 event can arrive later than 30 minutes - we can ignore  
+  - 999 events will arrive within 30 minutes which we will accomodate  
+  - Refer prog2.py file  
+  - watermark should be added before groupby only  
+  - At every point of time a **watermark boundary** will be created - whatever is the latest event till now - 30 minutes  
+  - <img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/127e4e1d-792b-40b8-ba78-8644465dc399" />  
+  - Latest event is 11:05, -30 minutes is 10.35 is the watermark boundary, any record before 10:35 is discarded from state store  
+  - Eventhough some of the records were more than 30 min they weren't discarded, some of the records were more than 30 min, those are not discarded it all depends on which window is open  
+  - **Points to remember**  
+  1. Watermark is the way to clean state store  
+  2. Events within the watermark are taken - this is guaranteed  
+  3. Events outside the watermark may or may not be taken - depends on which window open
 
-#### Streaming Joins (Joins of static, streaming and joins of 2 streaming df)
+#### Watermark and output modes (update mode is recommended and efficient one)
+------------------------------------------------------------------------------
+- Even output mode has a relation to the watermark
+- There are 3 output modes - 1)complete 2) update 3) append
+- complete mode  with watermark doesn't work
+- complete mode doesn't allows us to clean state store
+- Make only a small change in prog2.py
+- <img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/fac32e91-0388-4639-b974-bf36c99b0fc7" />
+- If we put this 11:14 record -
+- <img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/c39877c2-819d-488a-8e92-6ec1098b730f" />
+- Eventhough we used a watermark with complete mode - it didn't work - complete mode isn't recommended
+- <img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/9b297fb6-329d-46f1-a5e7-4b27ef6efd80" />
+
+###### Append mode 
+- For aggregations and window aggregations append mode will not work
+- watermark with windowing aggregations there is a big change in scenario
+- For append mode, if we use watermark 30 min duration - windowing aggregations are allowed
+- <img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/a114c23c-cf17-43b6-bde5-1d1c4fd449be" />
+- <img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/a9ff8c87-7233-4e2c-8e39-231f9e380cdd" />
+- watermark window is 10.35
+- if we put 11.05 record : it comes under 11-11.15 window, this record isn't outside the window, but its not inserted immediately, its maintained in the state store, may be more updates can happen to it and will not put to console
+- In append mode, only when the particular window is expired, then only it will show up in console
+- It delays the output to write it to sink only when the window is expired, then only it can guarantee no further updates to the record
+- **The window information will only be printed, once this window expires**
+- we have to wait atleast watermark duration - only disadvantage with append window
+
+##### Sliding window (Fixed size + overlapping windows)
+- 11:00 - 11.15
+- 11:05 - 11.20
+- 11.10 - 11.25
+- Add one more parameter sliding parameter
+- <img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/4a05db67-9fee-48e3-983e-a8e8d914a846" />
+
+#### Streaming Joins (Joins of static df + streaming df and joins of 2 streaming df)
 ----------------------------------------------------------------------------------
 - 
 
