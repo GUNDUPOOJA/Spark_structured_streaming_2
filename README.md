@@ -179,7 +179,8 @@ TRIGGERS IN SPARK STRUCTURED STREAMING
   - At every point of time a **watermark boundary** will be created - whatever is the latest event till now - 30 minutes  
   - <img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/127e4e1d-792b-40b8-ba78-8644465dc399" />  
   - Latest event is 11:05, -30 minutes is 10.35 is the watermark boundary, any record before 10:35 is discarded from state store  
-  - Eventhough some of the records were more than 30 min they weren't discarded, some of the records were more than 30 min, those are not discarded it all depends on which window is open  
+  - Eventhough some of the records were more than 30 min they weren't discarded, some of the records were more than 30 min, those are not discarded it all depends on which window is open
+    
   - **Points to remember**  
   1. Watermark is the way to clean state store  
   2. Events within the watermark are taken - this is guaranteed  
@@ -220,8 +221,30 @@ TRIGGERS IN SPARK STRUCTURED STREAMING
 
 #### Streaming Joins (Joins of static df + streaming df and joins of 2 streaming df)
 ----------------------------------------------------------------------------------
-- 
+- Structured streaming supports 2 kind of joins
+  1. static df to streaming df (common)
+  2. streaming df to another streaming df (we use sometimes)
+     
+- **static df to streaming df (common)**
+-----------------------------------------
+- To enrich the stream by adding more columns
+- Lets take an example from banking domain - I swipe a credit card at pos(point of sale machine) terminal - whenever card is swiped - a transaction will be generated
+- <img width="300" height="46" alt="image" src="https://github.com/user-attachments/assets/40dbb8a5-8bcb-4953-a14e-2a474d50b74e" />
+- This data is streaming, coming in json format, basically we want to enrich the above stream with more columns like member_id, country, state, card_creation_time (static data)
+- <img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/7ee05788-85d8-4dda-83e8-ac3843ded710" />
+- we have to join this static df + streaming df
+  
+- **will a left outer join work ?**
+- **Left outer join - all the matching records it will give + all the non matching records from the left table padded with nulls on the right**
+- Lets consider a scenario where left table is a static and right table is a streaming
+-  static is fixed, stream has new data coming in future
+-  lets say we have 123 in static, we don't have complete view of stream, so 123 may be available in some time, so left outer join is not possible
+  
+- when we change scenario left is stream, right is static 
+- In stream if we have 123, in static 123 never available as it static - so the result is: 123 null
 
+- **For a left outer join to work left side should be stream and right side should be static**
+- **For a right outer join to work left side should be static and right side should be stream**
 
 
 
